@@ -34,7 +34,8 @@ public class PhotoViewer extends JFrame  {
      * Serialization string required by extending JFrame
      */
     private static final long serialVersionUID = 1L;
-    
+    private JMenuItem dateSortMenuItem;
+    private JMenuItem ratingSortMenuItem;
     /**
      * Image Library that is displayed in this GUI
      */
@@ -42,10 +43,6 @@ public class PhotoViewer extends JFrame  {
     private int albumPosition;
 
     //TODO remove these buttons
-    private JButton nextButton;
-    private JButton previousButton;
-    private JButton dateSortButton;
-    private JButton ratingSortButton;
 
     private ButtonGroup ratingButtonGroup;
 
@@ -70,7 +67,33 @@ public class PhotoViewer extends JFrame  {
     //TODO Add a dateSortMenuItem and a ratingSortMenuItem
 
     //TODO Add a JMenuBar createMenu() method
+    /**
+     Create the menubar
+     @return a menubar to be sent into setJMenuBar method
+     **/
+    public JMenuBar createMenu() {
 
+        JMenuBar menuBar;
+        JMenu menu;
+
+        //Create the menu bar.
+        menuBar = new JMenuBar();
+
+        //Build the menu.
+        menu = new JMenu("Sort");
+        menu.setMnemonic(KeyEvent.VK_S);
+        menu.getAccessibleContext().setAccessibleDescription(
+                "Sort the photographs");
+        menuBar.add(menu);
+
+
+        dateSortMenuItem = new JMenuItem("Sort By Date", KeyEvent.VK_D);
+        ratingSortMenuItem = new JMenuItem("Sort By Rating", KeyEvent.VK_R);
+
+        menu.add(dateSortMenuItem);
+        menu.add(ratingSortMenuItem);
+        return menuBar;
+    }
     /**
      * Getter for image library
      * 
@@ -94,26 +117,65 @@ public class PhotoViewer extends JFrame  {
     /**
      * Button listener for the Next and Previous Buttons
      */
-    class NavigationListener implements ActionListener {
-        //TODO change this to be a KeyListener instead of ActionListener
-        //some of the code will be quite similar
+    class NavigationListener implements KeyListener {
+        @Override
+        public void keyTyped(KeyEvent e) {
+
+        }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            if(e.getSource() == nextButton) {
+        public void keyPressed (KeyEvent e) {
+            if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
                 albumPosition = (albumPosition + 1) % imageLibrary.numPhotographs();
             }
 
-            else if(e.getSource() == previousButton) {
+            else if(e.getKeyCode() == KeyEvent.VK_LEFT) {
                 albumPosition = (albumPosition - 1);
                 if (albumPosition < 0) {
                     albumPosition += imageLibrary.numPhotographs();
                 }
             }
             displayPhoto(albumPosition);
+        //TODO change this to be a KeyListener instead of ActionListener
+        //some of the code will be quite similar
+
+
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+
         }
     }
-    
+    class SortNavigationListener implements KeyListener{
+        @Override
+        public void keyPressed (KeyEvent e) {
+
+            //TODO: Ensure the dataSortMenuItem and ratingSortMenuItem are also handled here
+
+            if(e.getKeyCode() == KeyEvent.VK_RIGHT ) {
+                getImageLibrary().getPhotos().sort(Photograph::compareTo);
+            }
+            else if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+                getImageLibrary().getPhotos().sort(new CompareByRating());
+            }
+
+            //redraw the thumbnails and main photograph
+            drawThumbnails();
+            albumPosition=0;
+            displayPhoto(albumPosition);
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+
+        }
+    }
     /**
      * Button Listener for the Rating radio buttons
      */
@@ -144,25 +206,7 @@ public class PhotoViewer extends JFrame  {
     /**
      * Button Listener for the Sort buttons
      */
-    class SortNavigationListener implements ActionListener{
-        @Override
-        public void actionPerformed(ActionEvent e) {
 
-            //TODO: Ensure the dataSortMenuItem and ratingSortMenuItem are also handled here
-
-            if(e.getSource() == dateSortButton ) {
-                getImageLibrary().getPhotos().sort(Photograph::compareTo);
-            }
-            else if(e.getSource() == ratingSortButton) {
-                getImageLibrary().getPhotos().sort(new CompareByRating());
-            }
-
-            //redraw the thumbnails and main photograph
-            drawThumbnails();
-            albumPosition=0;
-            displayPhoto(albumPosition);
-        }
-    }
 
     /**
      * Main method.  This method initializes a PhotoViewer, loads images into a PhotographContainer, then
@@ -239,22 +283,12 @@ public class PhotoViewer extends JFrame  {
         // Initialize listeners for all components
         NavigationListener controlNavigationListener = new NavigationListener();
         RatingChangeListener ratingButtonListener = new RatingChangeListener();
-        SortNavigationListener sortListener = new SortNavigationListener();
 
         //TODO: Remove these buttons
 
         // Add buttons for sorting thumbnails.
-        dateSortButton = new JButton("Sort by Date");
-        dateSortButton.setActionCommand("dateSort");
-        dateSortButton.addActionListener(sortListener);
-
-        ratingSortButton = new JButton("Sort by Rating");
-        ratingSortButton.setActionCommand("ratingSort");
-        ratingSortButton.addActionListener(sortListener);
- 
-        controlPanel.add(dateSortButton);
-        controlPanel.add(ratingSortButton);
-
+        imageDisplayLabel.addKeyListener(new NavigationListener());
+        imageDisplayLabel.setFocusable(true);
         displayPanel.add(imageDisplayLabel);
 
         // Use a BoxLayout to display the thumbnails.
@@ -268,15 +302,7 @@ public class PhotoViewer extends JFrame  {
         //TODO Remove these buttons
 
         // Add buttons for next and previous navigation
-        previousButton = new JButton("Previous");
-        previousButton.setActionCommand("previous");
-        previousButton.addActionListener(controlNavigationListener);
-        bottomPanel.add(previousButton);
-        
-        nextButton = new JButton("Next");
-        nextButton.setActionCommand("next");
-        nextButton.addActionListener(controlNavigationListener);
-        bottomPanel.add(nextButton);
+
 
 
         //TODO Leave these buttons for now
@@ -328,11 +354,15 @@ public class PhotoViewer extends JFrame  {
         panelPane.add(bottomPanel, BorderLayout.SOUTH);
         this.getContentPane().add(panelPane);
 
+        dateSortMenuItem.addActionListener(sortListener);
+        ratingSortMenuItem.addActionListener(sortNavigationListener);
+
         //TODO Create the menu using setJMenuBar (calling your new method you created)
 
         // Show the main application window
         this.pack();
         this.setVisible(true);
+        setJMenuBar(createMenu());
     }
 
     /**
@@ -423,4 +453,5 @@ public class PhotoViewer extends JFrame  {
         // Repaint the display so that the new image gets displayed
         displayPanel.repaint();
     }
+
 }
