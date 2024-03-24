@@ -1,7 +1,7 @@
 
 More Graphical User Interfaces
 
-This lab is a continuation of our photo library java GUI application.
+This is a continuation of our photo library java GUI application.
 
 ![sample screen](res/samplescreen.png)
 
