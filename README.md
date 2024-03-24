@@ -1,4 +1,5 @@
-# Lab 08 More Graphical User Interfaces
+
+More Graphical User Interfaces
 
 This lab is a continuation of our photo library java GUI application.
 
